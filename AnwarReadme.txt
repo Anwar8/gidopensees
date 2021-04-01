@@ -1,1 +1,1 @@
-Dead load is not very good and sometimes applies load in the wrong direction (Y in stead of z). Need to be careful with it. 
+All the best with OpenSees for fire GUI. Dead load is not very good and sometimes applies load in the wrong direction (Y in stead of z). Need to be careful with it. 
