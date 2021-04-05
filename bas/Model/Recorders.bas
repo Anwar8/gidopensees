@@ -570,121 +570,438 @@ material *i fiber *layer TempAndElong
 *# ShellDKGQ
 *#
 *if(cntShellDKGQ!=0)
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(GenData(Stresses_in_layer_A,int)==1||GenData(Stresses_in_layer_B,int)==1||GenData(Stresses_in_layer_C,int)==1||GenData(Strains_in_layer_A,int)==1||GenData(Strains_in_layer_B,int)==1||GenData(Strains_in_layer_C,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
+*loop elems
+*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var SelectedSection=tcl(FindMaterialNumber *ElemsMatProp(Type) *DomainNum)
+*loop materials *NotUsed
+*set var SectionID=tcl(FindMaterialNumber *MatProp(0) *DomainNum)
+*if(SelectedSection==SectionID)
+*if(MatProp(Decking_thickness,Real) > 0)
+*set var Decklayers = 1
+*else
+*set var Decklayers = 0
+*endif
+*if(MatProp(Bot_cover_layers,int) > 0)
+*set var Botcoverlayers = MatProp(Bot_cover_layers,int)
+*else
+*set var Botcoverlayers = 0
+*endif
+*if(MatProp(Bot_transverse_bar_diameter,Real) > 0)
+*set var Bottranssteellayers = 1
+*else
+*set var Bottranssteellayers = 0
+*endif
+*if(MatProp(Bot_longitudinal_bar_diameter,Real) > 0)
+*set var Botlongsteellayers = 1
+*else
+*set var Botlongsteellayers = 0
+*endif
+*if(MatProp(Core_layers,int) > 0)
+*set var corelayers = MatProp(Core_layers,int)
+*else
+*set var corelayers = 0
+*endif
+*if(MatProp(Top_longitudinal_bar_diameter,Real) > 0)
+*set var Toplongsteellayers = 1
+*else
+*set var Toplongsteellayers = 0
+*endif
+*if(MatProp(Top_transverse_bar_diameter,Real) > 0)
+*set var Toptranssteellayers = 1
+*else
+*set var Toptranssteellayers = 0
+*endif
+*if(MatProp(Top_cover_layers,int) > 0)
+*set var Topcoverlayers = MatProp(Top_cover_layers,int)
+*else
+*set var Topcoverlayers = 0
+*endif
+*break
+*endif
+*end materials
+*break
+*endif
+*end elems
+*endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_A,int)==1)
-
-*set var layer = GenData(Stress_layer_A,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_stress_Layer*layer_GP*i.out -time -ele *\
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Stress_layer_A),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_A),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_A),"CustomLayer")==0)
+*set var layer = GenData(Layer_Number_A,int)
+*if(strcmp(GenData(Layer_Material_A),"Concrete")==0)
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Material_A),"Steel")==0)
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer stresses
-*endfor
+material $gaussID fiber *layer stress
+}
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_B,int)==1)
-
-*set var layer = GenData(Stress_layer_B,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_stress_Layer*layer_GP*i.out -time -ele *\
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Stress_layer_B),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_B),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_B),"CustomLayer")==0)
+*set var layer = GenData(Layer_Number_B,int)
+*if(strcmp(GenData(Layer_Material_B),"Concrete")==0)
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Material_B),"Steel")==0)
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer stresses
-*endfor
+material $gaussID fiber *layer stress
+}
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_C,int)==1)
-
-*set var layer = GenData(Stress_layer_C,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_stress_Layer*layer_GP*i.out -time -ele *\
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Stress_layer_C),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_C),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Stress_layer_C),"CustomLayer")==0)
+*set var layer = GenData(Layer_Number_C,int)
+*if(strcmp(GenData(Layer_Material_C),"Concrete")==0)
+ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Material_C),"Steel")==0)
+ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer stresses
-*endfor
+material $gaussID fiber *layer stress
+}
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_A,int)==1)
-
-*set var layer = GenData(Strain_layer_A,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_strain_Layer*layer_GP*i.out -time -ele *\
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Strain_layer_A),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_A),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_A),"CustomLayer")==0)
+*set var layer = GenData(Layer_No_A,int)
+*if(strcmp(GenData(Layer_Mat_A),"Concrete")==0)
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Mat_A),"Steel")==0)
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer strains
-*endfor
+material $gaussID fiber *layer strain
+}
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_B,int)==1)
-
-*set var layer = GenData(Strain_layer_B,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_strain_Layer*layer_GP*i.out -time -ele *\
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Strain_layer_B),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_B),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_B),"CustomLayer")==0)
+*set var layer = GenData(Layer_No_B,int)
+*if(strcmp(GenData(Layer_Mat_B),"Concrete")==0)
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Mat_B),"Steel")==0)
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer strains
-*endfor
+material $gaussID fiber *layer strain
+}
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_C,int)==1)
-
-*set var layer = GenData(Strain_layer_C,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_strain_Layer*layer_GP*i.out -time -ele *\
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Strain_layer_C),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_C),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Strain_layer_C),"CustomLayer")==0)
+*set var layer = GenData(Layer_No_C,int)
+*if(strcmp(GenData(Layer_Mat_C),"Concrete")==0)
+ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Mat_C),"Steel")==0)
+ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer strains
-*endfor
+material $gaussID fiber *layer strain
+}
 *endif
-*if(GenData(Temp_and_KtKc_in_layer_A,int)==1)
-
-*set var layer = GenData(Temp_KtKc_layer_A,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_TempKtKc_Layer*layer_GP*i.out -time -ele *\
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1)
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Temp_Elong_layer_A),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"CustomLayer")==0)
+*set var layer = GenData(Layer_Num_A,int)
+*if(strcmp(GenData(Layer_Mat__A),"Concrete")==0)
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Mat__A),"Steel")==0)
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer TempAndElong
-*endfor
+material $gaussID fiber *layer TempAndElong
+}
 *endif
-*if(GenData(Temp_and_KtKc_in_layer_B,int)==1)
-
-*set var layer = GenData(Temp_KtKc_layer_B,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_TempKtKc_Layer*layer_GP*i.out -time -ele *\
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1)
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Temp_Elong_layer_B),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"CustomLayer")==0)
+*set var layer = GenData(Layer_Num_B,int)
+*if(strcmp(GenData(Layer_Mat__B),"Concrete")==0)
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Mat__B),"Steel")==0)
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer TempAndElong
-*endfor
+material $gaussID fiber *layer TempAndElong
+}
 *endif
-*if(GenData(Temp_and_KtKc_in_layer_C,int)==1)
-
-*set var layer = GenData(Temp_KtKc_layer_C,int)
-*for(i=1;i<=4;i=i+1)
-recorder Element -file ShellDKGQ_TempKtKc_Layer*layer_GP*i.out -time -ele *\
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopnum = 0
+recorder Element -file *\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopnum = loopnum + 1
+*if(loopnum == 1)
+*if(strcmp(GenData(Temp_Elong_layer_C),"SteelTopLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTopTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotLongitudinal")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotTransverse")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTop")==0)
+*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteBottom")==0)
+*set var layer = Decklayers+Botcoverlayers
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"CustomLayer")==0)
+*set var layer = GenData(Layer_Num_C,int)
+*if(strcmp(GenData(Layer_Mat__C),"Concrete")==0)
+ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+*elseif(strcmp(GenData(Layer_Mat__C),"Steel")==0)
+ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+*endif
+*endif
+*endif
 *ElemsNum *\
 *endif
 *end elems
-material *i fiber *layer TempAndElong
-*endfor
+material $gaussID fiber *layer TempAndElong
+}
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *endif
