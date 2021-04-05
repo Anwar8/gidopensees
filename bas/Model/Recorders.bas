@@ -900,14 +900,14 @@ ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
 ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTop")==0)
 *set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteBottom")==0)
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_A),"CustomLayer")==0)
 *set var layer = GenData(Layer_Num_A,int)
 *if(strcmp(GenData(Layer_Mat__A),"Concrete")==0)
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
 *elseif(strcmp(GenData(Layer_Mat__A),"Steel")==0)
 ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
 *endif
@@ -942,14 +942,14 @@ ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
 ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTop")==0)
 *set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteBottom")==0)
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_B),"CustomLayer")==0)
 *set var layer = GenData(Layer_Num_B,int)
 *if(strcmp(GenData(Layer_Mat__B),"Concrete")==0)
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
 *elseif(strcmp(GenData(Layer_Mat__B),"Steel")==0)
 ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
 *endif
@@ -984,14 +984,14 @@ ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
 ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTop")==0)
 *set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteBottom")==0)
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
 *elseif(strcmp(GenData(Temp_Elong_layer_C),"CustomLayer")==0)
 *set var layer = GenData(Layer_Num_C,int)
 *if(strcmp(GenData(Layer_Mat__C),"Concrete")==0)
-ShellDKGQ_concrete_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
 *elseif(strcmp(GenData(Layer_Mat__C),"Steel")==0)
 ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
 *endif
