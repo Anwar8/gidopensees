@@ -186,6 +186,7 @@ pattern Plain *PatternTag *IntvData(Loading_type) {
 *set var fiberZ2=MatProp(Z2,real)
 *set var fiberY1=MatProp(Y1,real)
 *set var fiberY2=MatProp(Y2,real)
+*set var angle=MatProp(Rotation_angle,real)
 *else
 *MessageBox Error: Cannot grab section properties from anything other than a Fiber section
 *endif
@@ -194,8 +195,13 @@ pattern Plain *PatternTag *IntvData(Loading_type) {
 *end materials
 *#set var tempFileDir=tcl(GetTempFileDir *cond(1))
 *#cannot assign a string to a variable in .bas, thus invoke function directly in load command.
+*if(angle == 90 || angle == 270)
+*format "%d%8g%8g%8g%8g"
+    eleLoad -ele *ElemsNum -type -beamThermal -source *tcl(Fire::GetTempFileDir *cond(ID,int) beam-column) *fiberY1 *fiberY2 *fiberZ1 *fiberZ2
+*else
 *format "%d%8g%8g%8g%8g"
     eleLoad -ele *ElemsNum -type -beamThermal -z -source *tcl(Fire::GetTempFileDir *cond(ID,int) beam-column) *fiberY1 *fiberY2 *fiberZ1 *fiberZ2
+*endif
 *endif
 *end elems
 *endif

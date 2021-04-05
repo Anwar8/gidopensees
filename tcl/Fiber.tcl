@@ -606,29 +606,39 @@ proc Fiber::CalcCorners { event args } {
 					set CrossSectionType [DWLocalGetValue $GDN $STRUCT Cross_section]
 				
 					if {$CrossSectionType == "I_Section"} {
-							#Based on top flange point K
-							set H [expr $h*0.5 - $tf]
-							set z1 [expr $H*$cosine]
-							set z2 [expr 0.5*$b*$sine]
-							set z3 [expr 0.5*$tf*$cosine]
-							set Kz [expr $z1 + $z2 + $z3]
-							set Z2 $z1$HUnit
-							set ok [DWLocalSetValue $GDN $STRUCT "Z2" $Z2]
-							set y1 [expr $H*$sine]
-							set y2 [expr 0.5*$b*$cosine]
-							set y3 [expr 0.5*$tf*$sine]
-							set Ky [expr -$y1 + $y2 - $y3]
-							set Y2 $Ky$HUnit
-							set ok [DWLocalSetValue $GDN $STRUCT "Y2" $Y2]
-							
-							#Based on bottom flange point I
-							set Iz [expr -$z1 - $z2 - $z3]
-							set Z1 -$z1$HUnit
-							set ok [DWLocalSetValue $GDN $STRUCT "Z1" $Z1]
-							set Iy [expr $y1 - $y2 + $y3]
-							set Y1 $Iy$HUnit
-							set ok [DWLocalSetValue $GDN $STRUCT "Y1" $Y1]
-							
+							if {$Angle == 90 || $Angle == 270} {
+								set H [expr $h*0.5 - $tf]
+								set Y2 $H$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Y2" $Y2]
+								
+								set z2 [expr 0.5*$b]
+								set Z2 $z2$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Z2" $Z2]
+								
+								set y1 [expr -$h*0.5 + $tf]
+								set Y1 $y1$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Y1" $Y1]
+								
+								set z1 [expr -0.5*$b]
+								set Z1 $z1$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Z1" $Z1]
+							} else {
+								set H [expr $h*0.5 - $tf]
+								set Z2 $H$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Z2" $Z2]
+								
+								set y2 [expr 0.5*$b]
+								set Y2 $y2$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Y2" $Y2]
+								
+								set z1 [expr -$h*0.5 + $tf]
+								set Z1 $z1$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Z1" $Z1]
+								
+								set y1 [expr -0.5*$b]
+								set Y1 $y1$HUnit
+								set ok [DWLocalSetValue $GDN $STRUCT "Y1" $Y1]
+							}					
 					} elseif {$CrossSectionType == "Stiffened_I_Section_1"} {
 							set PlateLengthUnit [DWLocalGetValue $GDN $STRUCT Plate_l]
 							set PlateThickUnit [DWLocalGetValue $GDN $STRUCT Plate_t]
