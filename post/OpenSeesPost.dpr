@@ -3389,23 +3389,33 @@ begin
 
         WriteResults(false,
                      false,'Reading ShellDKGQ stresses (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_stress_Layer'+IntToStr(i),'ShellDKGQ','Stresses-Membrane (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_stress_Layer'+IntToStr(i),'ShellDKGQ','Stresses-Membrane (L'+IntToStr(i)+')',
                            's11','s22','s12','','','','kPa',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellDKGQ stresses (shear) for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_stress_Layer'+IntToStr(i),'ShellDKGQ','Stresses-Shear (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_stress_Layer'+IntToStr(i),'ShellDKGQ','Stresses-Shear (L'+IntToStr(i)+')',
                            't1','t2','N/A','','','','kPa',4,5,true,3,4,-1,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellDKGQ strains (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_strain_Layer'+IntToStr(i),'ShellDKGQ','Strains-Membrane (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_strain_Layer'+IntToStr(i),'ShellDKGQ','Strains-Membrane (L'+IntToStr(i)+')',
                            'e11','e22','e12','','','','-',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellDKGQ strains (shear) for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_strain_Layer'+IntToStr(i),'ShellDKGQ','Strains-Shear (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_strain_Layer'+IntToStr(i),'ShellDKGQ','Strains-Shear (L'+IntToStr(i)+')',
                            'g1','g2','N/A','','','','-',4,5,true,3,4,-1,-1,-1,-1);
+
+        WriteResults(false,
+                     false,'Reading ShellDKGQ Axial stresses for layer '+IntToStr(i)+' ',
+                           'ShellDKGQ_steel_stress_Layer'+IntToStr(i),'ShellDKGQ','Axial-Stresses (L'+IntToStr(i)+')',
+                           's11','','','','','','kPa',4,1,true,0,-1,-1,-1,-1,-1);
+
+        WriteResults(false,
+                     false,'Reading ShellDKGQ Axial strains for layer '+IntToStr(i)+' ',
+                           'ShellDKGQ_steel_strain_Layer'+IntToStr(i),'ShellDKGQ','Axial-Strains (L'+IntToStr(i)+')',
+                           'e11','','','','','','-',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteResults(false,
                       true,'Reading ShellDKGQ principal stresses (membrane) for layer '+IntToStr(i)+' ',
@@ -3419,8 +3429,13 @@ begin
 
         WriteResults(false,
                      false,'Reading ShellDKGQ damage indices for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_TempKtKc_Layer'+IntToStr(i),'ShellDKGQ','KtKc (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_TempElong_KtKc_Layer'+IntToStr(i),'ShellDKGQ','KtKc (L'+IntToStr(i)+')',
                            'Kt','Kc','T','','','','-',4,4,true,2,3,0,-1,-1,-1);
+
+        WriteResults(false,
+                     false,'Reading ShellDKGQ temperature indices for layer '+IntToStr(i)+' ',
+                           'ShellDKGQ_steel_TempElong_Layer'+IntToStr(i),'ShellDKGQ','Steel Temp (L'+IntToStr(i)+')',
+                           'T','','','','','','-',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteCracks(       'Reading ShellDKGQ cracks for layer '+IntToStr(i)+' ',
                            'ShellDKGQ_crack_Layer'+IntToStr(i),'ShellDKGQ','Cracks (L'+IntToStr(i)+')');
