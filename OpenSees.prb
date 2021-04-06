@@ -224,10 +224,12 @@ QUESTION: _#CB#(_)
 VALUE: Select output and specify layer numbers for up to three layers (A,B,C)
 QUESTION: _#CB#(_)
 VALUE:
+QUESTION: _#CB#(_)
+VALUE:
 QUESTION: Stresses_in_layer_A#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Stress_layer_A,#CURRENT#,HIDE,Layer_Material_A,#CURRENT#,HIDE,Layer_Number_A,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Stress_layer_A,CustomLayer,RESTORE,Layer_Material_A,#CURRENT#,RESTORE,Layer_Number_A,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Stress_layer_A,ConcreteTop,HIDE,Layer_Material_A,#CURRENT#,HIDE,Layer_Number_A,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Stress_layer_A,#CURRENT#,SET,Layer_Material_A,#CURRENT#,SET,Layer_Number_A,#CURRENT#)
 QUESTION: Stress_layer_A#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Material_A,#CURRENT#,HIDE,Layer_Number_A,#CURRENT#) 
@@ -244,8 +246,8 @@ QUESTION: Layer_Number_A
 VALUE: 1#WIDTH#(10)
 QUESTION: Stresses_in_layer_B#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Stress_layer_B,#CURRENT#,HIDE,Layer_Material_B,#CURRENT#,HIDE,Layer_Number_B,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Stress_layer_B,CustomLayer,RESTORE,Layer_Material_B,#CURRENT#,RESTORE,Layer_Number_B,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Stress_layer_B,ConcreteBottom,HIDE,Layer_Material_B,#CURRENT#,HIDE,Layer_Number_B,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Stress_layer_B,#CURRENT#,SET,Layer_Material_B,#CURRENT#,SET,Layer_Number_B,#CURRENT#)
 QUESTION: Stress_layer_B#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Material_B,#CURRENT#,HIDE,Layer_Number_B,#CURRENT#)
@@ -262,8 +264,8 @@ QUESTION: Layer_Number_B
 VALUE: 1#WIDTH#(10)
 QUESTION: Stresses_in_layer_C#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Stress_layer_C,#CURRENT#,HIDE,Layer_Material_C,#CURRENT#,HIDE,Layer_Number_C,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Stress_layer_C,CustomLayer,RESTORE,Layer_Material_C,#CURRENT#,RESTORE,Layer_Number_C,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Stress_layer_C,SteelTopLongitudinal,HIDE,Layer_Material_C,#CURRENT#,HIDE,Layer_Number_C,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Stress_layer_C,#CURRENT#,SET,Layer_Material_C,#CURRENT#,SET,Layer_Number_C,#CURRENT#)
 QUESTION: Stress_layer_C#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Material_C,#CURRENT#,HIDE,Layer_Number_C,#CURRENT#) 
@@ -282,8 +284,8 @@ QUESTION: _#CB#(_)
 VALUE:
 QUESTION: Strains_in_layer_A#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Strain_layer_A,#CURRENT#,HIDE,Layer_Mat_A,#CURRENT#,HIDE,Layer_No_A,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Strain_layer_A,CustomLayer,RESTORE,Layer_Mat_A,#CURRENT#,RESTORE,Layer_No_A,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Strain_layer_A,ConcreteTop,HIDE,Layer_Mat_A,#CURRENT#,HIDE,Layer_No_A,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Strain_layer_A,#CURRENT#,SET,Layer_Mat_A,#CURRENT#,SET,Layer_No_A,#CURRENT#)
 QUESTION: Strain_layer_A#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Mat_A,#CURRENT#,HIDE,Layer_No_A,#CURRENT#) 
@@ -300,8 +302,8 @@ QUESTION: Layer_No_A
 VALUE: 1#WIDTH#(10)
 QUESTION: Strains_in_layer_B#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Strain_layer_B,#CURRENT#,HIDE,Layer_Mat_B,#CURRENT#,HIDE,Layer_No_B,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Strain_layer_B,CustomLayer,RESTORE,Layer_Mat_B,#CURRENT#,RESTORE,Layer_No_B,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Strain_layer_B,ConcreteBottom,HIDE,Layer_Mat_B,#CURRENT#,HIDE,Layer_No_B,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Strain_layer_B,#CURRENT#,SET,Layer_Mat_B,#CURRENT#,SET,Layer_No_B,#CURRENT#)
 QUESTION: Strain_layer_B#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Mat_B,#CURRENT#,HIDE,Layer_No_B,#CURRENT#) 
@@ -318,8 +320,8 @@ QUESTION: Layer_No_B
 VALUE: 1#WIDTH#(10)
 QUESTION: Strains_in_layer_C#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Strain_layer_C,#CURRENT#,HIDE,Layer_Mat_C,#CURRENT#,HIDE,Layer_No_C,#CURRENT#)
-DEPENDENCIES: (1,RESTORE,Strain_layer_C,CustomLayer,RESTORE,Layer_Mat_C,#CURRENT#,RESTORE,Layer_No_C,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Strain_layer_C,SteelTopLongitudinal,HIDE,Layer_Mat_C,#CURRENT#,HIDE,Layer_No_C,#CURRENT#)
+DEPENDENCIES: (1,RESTORE,Strain_layer_C,#CURRENT#,SET,Layer_Mat_C,#CURRENT#,SET,Layer_No_C,#CURRENT#)
 QUESTION: Strain_layer_C#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Mat_C,#CURRENT#,HIDE,Layer_No_C,#CURRENT#) 
@@ -338,8 +340,8 @@ QUESTION: _#CB#(_)
 VALUE:
 QUESTION: Temp_Elong_and_KtKc_in_layer_A#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Temp_Elong_layer_A,#CURRENT#,HIDE,Layer_Mat__A,#CURRENT#,HIDE,Layer_Num_A,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Temp_Elong_layer_A,CustomLayer,RESTORE,Layer_Mat__A,#CURRENT#,RESTORE,Layer_Num_A,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Temp_Elong_layer_A,ConcreteTop,HIDE,Layer_Mat__A,#CURRENT#,HIDE,Layer_Num_A,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Temp_Elong_layer_A,#CURRENT#,SET,Layer_Mat__A,#CURRENT#,SET,Layer_Num_A,#CURRENT#)
 QUESTION: Temp_Elong_layer_A#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Mat__A,#CURRENT#,HIDE,Layer_Num_A,#CURRENT#) 
@@ -356,10 +358,10 @@ QUESTION: Layer_Num_A
 VALUE: 1#WIDTH#(10)
 QUESTION: Temp_Elong_and_KtKc_in_layer_B#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Temp_Elong_layer_B,#CURRENT#,HIDE,Layer_Mat__B,#CURRENT#,HIDE,Layer_Num_B,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Temp_Elong_layer_B,CustomLayer,RESTORE,Layer_Mat__B,#CURRENT#,RESTORE,Layer_Num_B,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Temp_Elong_layer_B,ConcreteBottom,HIDE,Layer_Mat__B,#CURRENT#,HIDE,Layer_Num_B,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Temp_Elong_layer_B,#CURRENT#,SET,Layer_Mat__B,#CURRENT#,SET,Layer_Num_B,#CURRENT#)
 QUESTION: Temp_Elong_layer_B#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
-VALUE: CustomLayer
+VALUE: ConcreteBottom
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Mat__B,#CURRENT#,HIDE,Layer_Num_B,#CURRENT#) 
 DEPENDENCIES: (SteelTopTransverse,HIDE,Layer_Mat__B,#CURRENT#,HIDE,Layer_Num_B,#CURRENT#) 
 DEPENDENCIES: (SteelBotLongitudinal,HIDE,Layer_Mat__B,#CURRENT#,HIDE,Layer_Num_B,#CURRENT#) 
@@ -369,13 +371,13 @@ DEPENDENCIES: (ConcreteTop,HIDE,Layer_Mat__B,#CURRENT#,HIDE,Layer_Num_B,#CURRENT
 DEPENDENCIES: (ConcreteBottom,HIDE,Layer_Mat__B,#CURRENT#,HIDE,Layer_Num_B,#CURRENT#) 
 DEPENDENCIES: (CustomLayer,RESTORE,Layer_Mat__B,#CURRENT#,RESTORE,Layer_Num_B,#CURRENT#)
 QUESTION: Layer_Mat__B#CB#(Concrete,Steel)
-VALUE: Concrete
+VALUE: Steel
 QUESTION: Layer_Num_B
 VALUE: 1#WIDTH#(10)
 QUESTION: Temp_Elong_and_KtKc_in_layer_C#CB#(1,0)
 VALUE: 0
-DEPENDENCIES: (0,HIDE,Temp_Elong_layer_C,#CURRENT#,HIDE,Layer_Mat__C,#CURRENT#,HIDE,Layer_Num_C,#CURRENT#) 
-DEPENDENCIES: (1,RESTORE,Temp_Elong_layer_C,CustomLayer,RESTORE,Layer_Mat__C,#CURRENT#,RESTORE,Layer_Num_C,#CURRENT#)
+DEPENDENCIES: (0,HIDE,Temp_Elong_layer_C,SteelTopLongitudinal,HIDE,Layer_Mat__C,#CURRENT#,HIDE,Layer_Num_C,#CURRENT#) 
+DEPENDENCIES: (1,RESTORE,Temp_Elong_layer_C,#CURRENT#,SET,Layer_Mat__C,#CURRENT#,SET,Layer_Num_C,#CURRENT#)
 QUESTION: Temp_Elong_layer_C#CB#(SteelTopLongitudinal,SteelTopTransverse,SteelBotLongitudinal,SteelBotTransverse,BottomDeck,ConcreteTop,ConcreteBottom,CustomLayer)
 VALUE: CustomLayer
 DEPENDENCIES: (SteelTopLongitudinal,HIDE,Layer_Mat__C,#CURRENT#,HIDE,Layer_Num_C,#CURRENT#) 
