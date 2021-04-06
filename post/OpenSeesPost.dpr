@@ -3343,38 +3343,53 @@ begin
 
         WriteResults(false,
                      false,'Reading ShellMITC4 stresses (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_stress_Layer'+IntToStr(i),'ShellMITC4','Stresses-Membrane (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_stress_Layer'+IntToStr(i),'ShellMITC4','Stresses-Membrane (L'+IntToStr(i)+')',
                            's11','s22','s12','','','','kPa',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellMITC4 stresses (shear) for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_stress_Layer'+IntToStr(i),'ShellMITC4','Stresses-Shear (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_stress_Layer'+IntToStr(i),'ShellMITC4','Stresses-Shear (L'+IntToStr(i)+')',
                            't1','t2','N/A','','','','kPa',4,5,true,3,4,-1,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellMITC4 strains (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_strain_Layer'+IntToStr(i),'ShellMITC4','Strains-Membrane (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_strain_Layer'+IntToStr(i),'ShellMITC4','Strains-Membrane (L'+IntToStr(i)+')',
                            'e11','e22','e12','','','','-',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellMITC4 strains (shear) for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_strain_Layer'+IntToStr(i),'ShellMITC4','Strains-Shear (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_strain_Layer'+IntToStr(i),'ShellMITC4','Strains-Shear (L'+IntToStr(i)+')',
                            'g1','g2','N/A','','','','-',4,5,true,3,4,-1,-1,-1,-1);
+
+         WriteResults(false,
+                     false,'Reading ShellMITC4 Axial stresses for layer '+IntToStr(i)+' ',
+                           'ShellMITC4_steel_stress_Layer'+IntToStr(i),'ShellMITC4','Axial-Stresses (L'+IntToStr(i)+')',
+                           's11','','','','','','kPa',4,1,true,0,-1,-1,-1,-1,-1);
+
+        WriteResults(false,
+                     false,'Reading ShellMITC4 Axial strains for layer '+IntToStr(i)+' ',
+                           'ShellMITC4_steel_strain_Layer'+IntToStr(i),'ShellMITC4','Axial-Strains (L'+IntToStr(i)+')',
+                           'e11','','','','','','-',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteResults(false,
                       true,'Reading ShellMITC4 principal stresses (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_stress_Layer'+IntToStr(i),'ShellMITC4','Stresses-Membrane-Principal (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_stress_Layer'+IntToStr(i),'ShellMITC4','Stresses-Membrane-Principal (L'+IntToStr(i)+')',
                            's1','s2','angle','','','','kPa',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
                       true,'Reading ShellMITC4 principal strains (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_strain_Layer'+IntToStr(i),'ShellMITC4','Strains-Membrane-Principal (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_strain_Layer'+IntToStr(i),'ShellMITC4','Strains-Membrane-Principal (L'+IntToStr(i)+')',
                            'e1','e2','angle','','','','-',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellMITC4 damage indices for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_TempKtKc_Layer'+IntToStr(i),'ShellMITC4','KtKc (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_TempElong_KtKc_Layer'+IntToStr(i),'ShellMITC4','KtKc (L'+IntToStr(i)+')',
                            'Kt','Kc','T','','','','-',4,4,true,2,3,0,-1,-1,-1);
+
+        WriteResults(false,
+                     false,'Reading ShellMITC4 steel temperature indices for layer '+IntToStr(i)+' ',
+                           'ShellMITC4_steel_TempElong_Layer'+IntToStr(i),'ShellMITC4','Steel Temp (L'+IntToStr(i)+')',
+                           'T','','','','','','-',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteCracks(       'Reading ShellMITC4 cracks for layer '+IntToStr(i)+' ',
                            'ShellMITC4_crack_Layer'+IntToStr(i),'ShellMITC4','Cracks (L'+IntToStr(i)+')');
@@ -3419,12 +3434,12 @@ begin
 
         WriteResults(false,
                       true,'Reading ShellDKGQ principal stresses (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_stress_Layer'+IntToStr(i),'ShellDKGQ','Stresses-Membrane-Principal (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_stress_Layer'+IntToStr(i),'ShellDKGQ','Stresses-Membrane-Principal (L'+IntToStr(i)+')',
                            's1','s2','angle','','','','kPa',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
                       true,'Reading ShellDKGQ principal strains (membrane) for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_strain_Layer'+IntToStr(i),'ShellDKGQ','Strains-Membrane-Principal (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_strain_Layer'+IntToStr(i),'ShellDKGQ','Strains-Membrane-Principal (L'+IntToStr(i)+')',
                            'e1','e2','angle','','','','-',4,5,true,0,1,2,-1,-1,-1);
 
         WriteResults(false,
@@ -3433,7 +3448,7 @@ begin
                            'Kt','Kc','T','','','','-',4,4,true,2,3,0,-1,-1,-1);
 
         WriteResults(false,
-                     false,'Reading ShellDKGQ temperature indices for layer '+IntToStr(i)+' ',
+                     false,'Reading ShellDKGQ steel temperature indices for layer '+IntToStr(i)+' ',
                            'ShellDKGQ_steel_TempElong_Layer'+IntToStr(i),'ShellDKGQ','Steel Temp (L'+IntToStr(i)+')',
                            'T','','','','','','-',4,1,true,0,-1,-1,-1,-1,-1);
 
