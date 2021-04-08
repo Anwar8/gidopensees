@@ -450,17 +450,23 @@ source "../Scripts/Recorders.tcl"; # user recorders
 *#
 *# ShellMITC4
 *#
-
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(cntShell!=0)
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_A,int)==1||GenData(Stresses_in_layer_B,int)==1||GenData(Stresses_in_layer_C,int)==1||GenData(Strains_in_layer_A,int)==1||GenData(Strains_in_layer_B,int)==1||GenData(Strains_in_layer_C,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
-for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopcount = 0
+*set var materialcheck = 0
+set ShellMITC4elements {*\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
+*set var loopcount = loopcount + 1
+*if(loopcount == 1)
 *set var SelectedSection=tcl(FindMaterialNumber *ElemsMatProp(Type) *DomainNum)
 *loop materials *NotUsed
 *set var SectionID=tcl(FindMaterialNumber *MatProp(0) *DomainNum)
 *if(SelectedSection==SectionID)
+*if(strcmp(MatProp(Section:),"LayeredShell")==0)
+*set var materialcheck = 1
 *if(MatProp(Decking_thickness,Real) > 0)
 *set var Decklayers = 1
 *else
@@ -471,15 +477,15 @@ for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
 *else
 *set var Botcoverlayers = 0
 *endif
-*if(MatProp(Bot_transverse_bar_diameter,Real) > 0)
-*set var Bottranssteellayers = 1
-*else
-*set var Bottranssteellayers = 0
-*endif
 *if(MatProp(Bot_longitudinal_bar_diameter,Real) > 0)
 *set var Botlongsteellayers = 1
 *else
 *set var Botlongsteellayers = 0
+*endif
+*if(MatProp(Bot_transverse_bar_diameter,Real) > 0)
+*set var Bottranssteellayers = 1
+*else
+*set var Bottranssteellayers = 0
 *endif
 *if(MatProp(Core_layers,int) > 0)
 *set var corelayers = MatProp(Core_layers,int)
@@ -503,389 +509,546 @@ for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
 *endif
 *break
 *endif
+*endif
 *end materials
-*break
-*endif
-*end elems
-*endif
-*#-------------------------------------------------------------------------------------------------------------------------
-*if(GenData(Stresses_in_layer_A,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Stress_layer_A),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"ConcreteBottom")==0)
-*set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"CustomLayer")==0)
-*set var layer = GenData(Layer_Number_A,int)
-*if(strcmp(GenData(Layer_Material_A),"Concrete")==0)
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
-*elseif(strcmp(GenData(Layer_Material_A),"Steel")==0)
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
-*endif
-*endif
 *endif
 *ElemsNum *\
 *endif
 *end elems
-material $gaussID fiber *layer stress
+}
+*endif
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(materialcheck==1)
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(GenData(Stresses_in_layer_A,int)==1)
+*if(strcmp(GenData(Stress_layer_A),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"CustomLayer")==0 && GenData(Layer_Number_A,int)>0)
+*set var layer = GenData(Layer_Number_A,int)
+*if(strcmp(GenData(Layer_Material_A),"Concrete")==0)
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Layer_Material_A),"Steel")==0)
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
+*endif
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_B,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Stress_layer_B),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"ConcreteBottom")==0)
+*if(strcmp(GenData(Stress_layer_B),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"CustomLayer")==0 && GenData(Layer_Number_B,int)>0)
 *set var layer = GenData(Layer_Number_B,int)
 *if(strcmp(GenData(Layer_Material_B),"Concrete")==0)
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
 *elseif(strcmp(GenData(Layer_Material_B),"Steel")==0)
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer stress
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_C,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Stress_layer_C),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"ConcreteBottom")==0)
+*if(strcmp(GenData(Stress_layer_C),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"CustomLayer")==0 && GenData(Layer_Number_C,int)>0)
 *set var layer = GenData(Layer_Number_C,int)
 *if(strcmp(GenData(Layer_Material_C),"Concrete")==0)
-ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
 *elseif(strcmp(GenData(Layer_Material_C),"Steel")==0)
-ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer stress
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer stress
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_A,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Strain_layer_A),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"ConcreteBottom")==0)
+*if(strcmp(GenData(Strain_layer_A),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"CustomLayer")==0 && GenData(Layer_No_A,int)>0)
 *set var layer = GenData(Layer_No_A,int)
 *if(strcmp(GenData(Layer_Mat_A),"Concrete")==0)
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *elseif(strcmp(GenData(Layer_Mat_A),"Steel")==0)
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer strain
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_B,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Strain_layer_B),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"ConcreteBottom")==0)
+*if(strcmp(GenData(Strain_layer_B),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"CustomLayer")==0 && GenData(Layer_No_B,int)>0)
 *set var layer = GenData(Layer_No_B,int)
 *if(strcmp(GenData(Layer_Mat_B),"Concrete")==0)
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *elseif(strcmp(GenData(Layer_Mat_B),"Steel")==0)
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer strain
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_C,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Strain_layer_C),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"ConcreteBottom")==0)
+*if(strcmp(GenData(Strain_layer_C),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"CustomLayer")==0 && GenData(Layer_No_C,int)>0)
 *set var layer = GenData(Layer_No_C,int)
 *if(strcmp(GenData(Layer_Mat_C),"Concrete")==0)
-ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *elseif(strcmp(GenData(Layer_Mat_C),"Steel")==0)
-ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer strain
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer strain
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Temp_Elong_layer_A),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteBottom")==0)
+*if(strcmp(GenData(Temp_Elong_layer_A),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"CustomLayer")==0 && GenData(Layer_Num_A,int)>0)
 *set var layer = GenData(Layer_Num_A,int)
 *if(strcmp(GenData(Layer_Mat__A),"Concrete")==0)
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *elseif(strcmp(GenData(Layer_Mat__A),"Steel")==0)
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer TempAndElong
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Temp_Elong_layer_B),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteBottom")==0)
+*if(strcmp(GenData(Temp_Elong_layer_B),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"CustomLayer")==0 && GenData(Layer_Num_B,int)>0)
 *set var layer = GenData(Layer_Num_B,int)
 *if(strcmp(GenData(Layer_Mat__B),"Concrete")==0)
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *elseif(strcmp(GenData(Layer_Mat__B),"Steel")==0)
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer TempAndElong
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"Shell")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Temp_Elong_layer_C),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteBottom")==0)
+*if(strcmp(GenData(Temp_Elong_layer_C),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *set var layer = Decklayers+Botcoverlayers
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"CustomLayer")==0)
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"CustomLayer")==0 && GenData(Layer_Num_C,int)>0)
 *set var layer = GenData(Layer_Num_C,int)
 *if(strcmp(GenData(Layer_Mat__C),"Concrete")==0)
-ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *elseif(strcmp(GenData(Layer_Mat__C),"Steel")==0)
-ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellMITC4_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellMITC4elements material $gaussID fiber *layer TempAndElong
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer TempAndElong
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_A,int)==1||GenData(Stresses_in_layer_B,int)==1||GenData(Stresses_in_layer_C,int)==1||GenData(Strains_in_layer_A,int)==1||GenData(Strains_in_layer_B,int)==1||GenData(Strains_in_layer_C,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
 }
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
+*else
+*MessageBox Layered Output is applicable for Shell Elements assigned with Layered Shell Sections only (check with sections in ShellDKGQ elements
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
+*endif
+*#-------------------------------------------------------------------------------------------------------------------------
+*#
+*# Layer output
+*#
 *#
 *# ShellDKGQ
 *#
+*#-------------------------------------------------------------------------------------------------------------------------
 *if(cntShellDKGQ!=0)
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_A,int)==1||GenData(Stresses_in_layer_B,int)==1||GenData(Stresses_in_layer_C,int)==1||GenData(Strains_in_layer_A,int)==1||GenData(Strains_in_layer_B,int)==1||GenData(Strains_in_layer_C,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
-for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*set var loopcount = 0
+*set var materialcheck = 0
+set ShellDKGQelements {*\
 *loop elems
 *if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
+*set var loopcount = loopcount + 1
+*if(loopcount == 1)
 *set var SelectedSection=tcl(FindMaterialNumber *ElemsMatProp(Type) *DomainNum)
 *loop materials *NotUsed
 *set var SectionID=tcl(FindMaterialNumber *MatProp(0) *DomainNum)
 *if(SelectedSection==SectionID)
+*if(strcmp(MatProp(Section:),"LayeredShell")==0)
+*set var materialcheck = 1
 *if(MatProp(Decking_thickness,Real) > 0)
 *set var Decklayers = 1
 *else
@@ -896,15 +1059,15 @@ for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
 *else
 *set var Botcoverlayers = 0
 *endif
-*if(MatProp(Bot_transverse_bar_diameter,Real) > 0)
-*set var Bottranssteellayers = 1
-*else
-*set var Bottranssteellayers = 0
-*endif
 *if(MatProp(Bot_longitudinal_bar_diameter,Real) > 0)
 *set var Botlongsteellayers = 1
 *else
 *set var Botlongsteellayers = 0
+*endif
+*if(MatProp(Bot_transverse_bar_diameter,Real) > 0)
+*set var Bottranssteellayers = 1
+*else
+*set var Bottranssteellayers = 0
 *endif
 *if(MatProp(Core_layers,int) > 0)
 *set var corelayers = MatProp(Core_layers,int)
@@ -928,375 +1091,521 @@ for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
 *endif
 *break
 *endif
+*endif
 *end materials
-*break
-*endif
-*end elems
-*endif
-*#-------------------------------------------------------------------------------------------------------------------------
-*if(GenData(Stresses_in_layer_A,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Stress_layer_A),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"ConcreteBottom")==0)
-*set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_A),"CustomLayer")==0)
-*set var layer = GenData(Layer_Number_A,int)
-*if(strcmp(GenData(Layer_Material_A),"Concrete")==0)
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
-*elseif(strcmp(GenData(Layer_Material_A),"Steel")==0)
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
-*endif
-*endif
 *endif
 *ElemsNum *\
 *endif
 *end elems
-material $gaussID fiber *layer stress
+}
+*endif
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(materialcheck==1)
+for {set gaussID 1} {$gaussID<=4} {incr gaussID} {
+*#-------------------------------------------------------------------------------------------------------------------------
+*if(GenData(Stresses_in_layer_A,int)==1)
+*if(strcmp(GenData(Stress_layer_A),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_A),"CustomLayer")==0 && GenData(Layer_Number_A,int)>0)
+*set var layer = GenData(Layer_Number_A,int)
+*if(strcmp(GenData(Layer_Material_A),"Concrete")==0)
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Layer_Material_A),"Steel")==0)
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
+*endif
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_B,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Stress_layer_B),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"ConcreteBottom")==0)
+*if(strcmp(GenData(Stress_layer_B),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_B),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_B),"CustomLayer")==0 && GenData(Layer_Number_B,int)>0)
 *set var layer = GenData(Layer_Number_B,int)
 *if(strcmp(GenData(Layer_Material_B),"Concrete")==0)
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
 *elseif(strcmp(GenData(Layer_Material_B),"Steel")==0)
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer stress
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_C,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Stress_layer_C),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"ConcreteBottom")==0)
+*if(strcmp(GenData(Stress_layer_C),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Stress_layer_C),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
+*elseif(strcmp(GenData(Stress_layer_C),"CustomLayer")==0 && GenData(Layer_Number_C,int)>0)
 *set var layer = GenData(Layer_Number_C,int)
 *if(strcmp(GenData(Layer_Material_C),"Concrete")==0)
-ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
 *elseif(strcmp(GenData(Layer_Material_C),"Steel")==0)
-ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_stress_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer stress
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer stress
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_A,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Strain_layer_A),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"ConcreteBottom")==0)
+*if(strcmp(GenData(Strain_layer_A),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_A),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_A),"CustomLayer")==0 && GenData(Layer_No_A,int)>0)
 *set var layer = GenData(Layer_No_A,int)
 *if(strcmp(GenData(Layer_Mat_A),"Concrete")==0)
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *elseif(strcmp(GenData(Layer_Mat_A),"Steel")==0)
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer strain
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_B,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Strain_layer_B),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"ConcreteBottom")==0)
+*if(strcmp(GenData(Strain_layer_B),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_B),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_B),"CustomLayer")==0 && GenData(Layer_No_B,int)>0)
 *set var layer = GenData(Layer_No_B,int)
 *if(strcmp(GenData(Layer_Mat_B),"Concrete")==0)
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *elseif(strcmp(GenData(Layer_Mat_B),"Steel")==0)
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer strain
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Strains_in_layer_C,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Strain_layer_C),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"ConcreteBottom")==0)
+*if(strcmp(GenData(Strain_layer_C),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Strain_layer_C),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
+*elseif(strcmp(GenData(Strain_layer_C),"CustomLayer")==0 && GenData(Layer_No_C,int)>0)
 *set var layer = GenData(Layer_No_C,int)
 *if(strcmp(GenData(Layer_Mat_C),"Concrete")==0)
-ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *elseif(strcmp(GenData(Layer_Mat_C),"Steel")==0)
-ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_strain_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer strain
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer strain
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Temp_Elong_layer_A),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteBottom")==0)
+*if(strcmp(GenData(Temp_Elong_layer_A),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_A),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_A),"CustomLayer")==0 && GenData(Layer_Num_A,int)>0)
 *set var layer = GenData(Layer_Num_A,int)
 *if(strcmp(GenData(Layer_Mat__A),"Concrete")==0)
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *elseif(strcmp(GenData(Layer_Mat__A),"Steel")==0)
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer TempAndElong
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Temp_Elong_layer_B),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteBottom")==0)
+*if(strcmp(GenData(Temp_Elong_layer_B),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_B),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_B),"CustomLayer")==0 && GenData(Layer_Num_B,int)>0)
 *set var layer = GenData(Layer_Num_B,int)
 *if(strcmp(GenData(Layer_Mat__B),"Concrete")==0)
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *elseif(strcmp(GenData(Layer_Mat__B),"Steel")==0)
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer TempAndElong
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
-*set var loopnum = 0
-recorder Element -file *\
-*loop elems
-*if(strcmp(ElemsMatProp(Element_type:),"ShellDKGQ")==0)
-*set var loopnum = loopnum + 1
-*if(loopnum == 1)
-*if(strcmp(GenData(Temp_Elong_layer_C),"SteelTopLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTopTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotLongitudinal")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotTransverse")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTop")==0)
-*set var layer = Decklayers+Botcoverlayers+Bottranssteellayers+Botlongsteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteBottom")==0)
+*if(strcmp(GenData(Temp_Elong_layer_C),"SteelTopBot")==0 && Toplongsteellayers>0 && Toplongsteellayers>0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTop")==0 && Toplongsteellayers>0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBot")==0 && Botlongsteellayers>0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTopLongitudinal")==0 && Toplongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelTopTransverse")==0 && Toptranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotLongitudinal")==0 && Botlongsteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"SteelBotTransverse")==0 && Bottranssteellayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTopBot")==0 && Topcoverlayers>0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *set var layer = Decklayers+Botcoverlayers
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele *\
-*elseif(strcmp(GenData(Temp_Elong_layer_C),"CustomLayer")==0)
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteTop")==0 && Topcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers+Botlongsteellayers+Bottranssteellayers+corelayers+Toplongsteellayers+Toptranssteellayers+Topcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"ConcreteBottom")==0 && Botcoverlayers>0)
+*set var layer = Decklayers+Botcoverlayers
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
+*elseif(strcmp(GenData(Temp_Elong_layer_C),"CustomLayer")==0 && GenData(Layer_Num_C,int)>0)
 *set var layer = GenData(Layer_Num_C,int)
 *if(strcmp(GenData(Layer_Mat__C),"Concrete")==0)
-ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_concrete_TempElong_KtKc_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *elseif(strcmp(GenData(Layer_Mat__C),"Steel")==0)
-ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out  -time -ele *\
+recorder Element -file ShellDKGQ_steel_TempElong_Layer*layer_GP$gaussID.out -time -ele {**}$ShellDKGQelements material $gaussID fiber *layer TempAndElong
 *endif
+*else
+*MessageBox Warning: Please provide valid number of integer layers greater than 0. Also check with the Layered Shell Thermal Sectional Properties.
 *endif
-*endif
-*ElemsNum *\
-*endif
-*end elems
-material $gaussID fiber *layer TempAndElong
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *if(GenData(Stresses_in_layer_A,int)==1||GenData(Stresses_in_layer_B,int)==1||GenData(Stresses_in_layer_C,int)==1||GenData(Strains_in_layer_A,int)==1||GenData(Strains_in_layer_B,int)==1||GenData(Strains_in_layer_C,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_A,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_B,int)==1||GenData(Temp_Elong_and_KtKc_in_layer_C,int)==1)
 }
 *endif
+*#-------------------------------------------------------------------------------------------------------------------------
+*else
+*MessageBox Layered Output is applicable for Shell Elements assigned with Layered Shell Sections only (check with sections in ShellDKGQ elements
+*endif
+*#-------------------------------------------------------------------------------------------------------------------------
 *endif
 *#-------------------------------------------------------------------------------------------------------------------------
 *# Ended by Tejeswar Yarlagadda

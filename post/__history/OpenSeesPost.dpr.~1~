@@ -3363,12 +3363,12 @@ begin
 
          WriteResults(false,
                      false,'Reading ShellMITC4 Axial stresses for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_steel_stress_Layer'+IntToStr(i),'ShellMITC4','Steel-Stresses (L'+IntToStr(i)+')',
+                           'ShellMITC4_steel_stress_Layer'+IntToStr(i),'ShellMITC4','Axial-Stresses (L'+IntToStr(i)+')',
                            's11','','','','','','kPa',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellMITC4 Axial strains for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_steel_strain_Layer'+IntToStr(i),'ShellMITC4','Steel-Strains (L'+IntToStr(i)+')',
+                           'ShellMITC4_steel_strain_Layer'+IntToStr(i),'ShellMITC4','Axial-Strains (L'+IntToStr(i)+')',
                            'e11','','','','','','-',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteResults(false,
@@ -3383,7 +3383,7 @@ begin
 
         WriteResults(false,
                      false,'Reading ShellMITC4 damage indices for layer '+IntToStr(i)+' ',
-                           'ShellMITC4_concrete_TempElong_KtKc_Layer'+IntToStr(i),'ShellMITC4','Concrete Temp and Damage (L'+IntToStr(i)+')',
+                           'ShellMITC4_concrete_TempElong_KtKc_Layer'+IntToStr(i),'ShellMITC4','KtKc (L'+IntToStr(i)+')',
                            'Kt','Kc','T','','','','-',4,4,true,2,3,0,-1,-1,-1);
 
         WriteResults(false,
@@ -3424,12 +3424,12 @@ begin
 
         WriteResults(false,
                      false,'Reading ShellDKGQ Axial stresses for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_steel_stress_Layer'+IntToStr(i),'ShellDKGQ','Steel-Stresses (L'+IntToStr(i)+')',
+                           'ShellDKGQ_steel_stress_Layer'+IntToStr(i),'ShellDKGQ','Axial-Stresses (L'+IntToStr(i)+')',
                            's11','','','','','','kPa',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteResults(false,
                      false,'Reading ShellDKGQ Axial strains for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_steel_strain_Layer'+IntToStr(i),'ShellDKGQ','Steel-Strains (L'+IntToStr(i)+')',
+                           'ShellDKGQ_steel_strain_Layer'+IntToStr(i),'ShellDKGQ','Axial-Strains (L'+IntToStr(i)+')',
                            'e11','','','','','','-',4,1,true,0,-1,-1,-1,-1,-1);
 
         WriteResults(false,
@@ -3444,7 +3444,7 @@ begin
 
         WriteResults(false,
                      false,'Reading ShellDKGQ damage indices for layer '+IntToStr(i)+' ',
-                           'ShellDKGQ_concrete_TempElong_KtKc_Layer'+IntToStr(i),'ShellDKGQ','Concrete Temp and Damage (L'+IntToStr(i)+')',
+                           'ShellDKGQ_concrete_TempElong_KtKc_Layer'+IntToStr(i),'ShellDKGQ','KtKc (L'+IntToStr(i)+')',
                            'Kt','Kc','T','','','','-',4,4,true,2,3,0,-1,-1,-1);
 
         WriteResults(false,
